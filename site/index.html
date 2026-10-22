@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TraceScope: Tracing Failures from Evidence to Decision in Upper-GI Endoscopy. Six clinical tasks, evidence-grounded construction, and two complementary diagnostic axes.">
+  <meta name="theme-color" content="#fafaf6">
+  <meta name="robots" content="noindex, nofollow">
+  <meta property="og:title" content="TraceScope — From Evidence to Decision">
+  <meta property="og:description" content="9,106 items. Six clinical tasks. Two diagnostic axes. A workflow-grounded benchmark for upper-GI endoscopy.">
+  <meta property="og:type" content="website">
+  <title>TraceScope — From Evidence to Decision</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./assets/fonts/manrope-regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header"><div class="nav-wrap">
+    <a href="#home" class="brand" aria-label="TraceScope home"><img src="./assets/favicon.svg" width="28" height="28" alt=""><span>TraceScope<span class="brand-dot">.</span></span></a>
+    <button class="menu-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><span></span><span></span></button>
+    <nav id="primary-nav" aria-label="Main navigation"><a href="#benchmark">Benchmark</a><a href="#construction">Construction</a><a href="#axes">Findings</a><a href="#results">Results</a><a class="nav-paper" data-paper href="./assets/tracescope.pdf" target="_blank" rel="noopener">Paper <span aria-hidden="true">↗</span></a></nav>
+  </div></header>
+  <main id="main">
+    <section class="hero section-wrap" id="home" aria-labelledby="hero-title">
+      <div class="eyebrow">A WORKFLOW-GROUNDED UPPER-GI BENCHMARK</div>
+      <div class="hero-brand"><img class="brand-illustration" src="./assets/brand-illustration.png" width="140" height="140" alt="Illustration of a research robot exploring visual evidence beside a stylized stomach"><h1 id="hero-title">Trace<span>Scope</span><span class="title-period">.</span></h1></div>
+      <p class="hero-statement">Tracing Failures from Evidence to Decision<br>in Upper-GI Endoscopy</p>
+      <p class="hero-description">Six clinical tasks. Traceable evidence. Two complementary diagnostic axes.</p>
+      <div id="publication-meta" hidden></div>
+      <div class="hero-actions"><a class="button button-primary" data-paper href="./assets/tracescope.pdf" target="_blank" rel="noopener">Read the paper <span aria-hidden="true">↗</span></a><a class="button button-outline" data-repository href="https://github.com/Scatteredrain/TraceScope" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a></div>
+      <div class="stats-inline" aria-label="Benchmark statistics"><div><strong>9,106</strong><span>Items</span></div><div><strong>4,893</strong><span>Examinations</span></div><div><strong>6</strong><span>Tasks</span></div><div><strong>22</strong><span>MLLMs</span></div><div><strong>2</strong><span>Diagnostic axes</span></div></div>
+    </section>
+
+    <section class="section-wrap story-section" id="benchmark" aria-labelledby="benchmark-title">
+      <div class="section-heading"><div class="eyebrow">01 / WHAT TRACESCOPE MEASURES</div><h2 id="benchmark-title">A clinical workflow,<br><em>measured stage by stage.</em></h2><p>From local perception to examination-level synthesis and guideline decisions, every task is paired with the evidence it needs.</p></div>
+      <figure class="research-figure overview-figure"><button class="paper-image" data-figure="./assets/overview.webp" data-caption="Figure 1 · TraceScope overview" aria-label="Enlarge Figure 1, TraceScope overview"><img src="./assets/overview.webp" alt="TraceScope Figure 1: four forms of visual evidence, six clinical workflow tasks, and two complementary diagnostic axes" width="2200" height="1440" fetchpriority="high"><span class="expand-hint" aria-hidden="true">⤢</span></button><figcaption><span class="figure-label">FIG. 1</span><span>Six connected tasks, from anatomy and findings to diagnostic impression and guideline reasoning.</span></figcaption></figure>
+      <div class="dataset-intro" id="dataset"><h3>One shared clinical specification.</h3><p>Canonical anatomy, findings, attributes and guideline states connect task construction with evaluation.</p></div>
+      <figure class="research-figure"><button class="paper-image" data-figure="./assets/composition.webp" data-caption="Figure 2 · Clinical specification and task organization" aria-label="Enlarge Figure 2, clinical specification and task organization"><img src="./assets/composition.webp" alt="TraceScope Figure 2: clinical vocabularies, task-specific evidence forms, and the composition of the 9,106-item benchmark" width="2200" height="628" loading="lazy"><span class="expand-hint" aria-hidden="true">⤢</span></button><figcaption><span class="figure-label">FIG. 2</span><span>Clinical vocabularies, admissible evidence and response forms define the 9,106-item main board.</span></figcaption></figure>
+
+      <details class="expandable" id="explore"><summary><span>Explore real task examples <small>6 tasks · visual evidence · reference answers</small></span><span class="expand-mark" aria-hidden="true">+</span></summary><div class="expandable-body">
+        <p class="detail-intro">Each tab shows a separate worked example from the paper.</p>
+        <div class="task-tabs" id="example-tabs" role="tablist" aria-label="Task examples"></div>
+        <div class="example-panel" id="example-panel" role="tabpanel" tabindex="0"><div class="evidence-view"><div class="panel-label"><span id="evidence-label"></span><span id="evidence-number"></span></div><div class="evidence-image-wrap"><img id="example-image" src="./assets/task-2-evidence-1.webp" alt="" width="484" height="143"></div><div class="evidence-caption"><span id="evidence-caption"></span><button class="icon-button" id="expand-evidence" aria-label="Enlarge example evidence" title="Enlarge evidence">⤢</button></div></div><div class="question-view"><div class="question-meta"><span id="example-task-id" class="tag"></span><span id="example-form"></span></div><h3 id="example-title"></h3><p id="example-question"></p><div id="example-options"></div><button class="button button-outline" id="reveal-answer" aria-expanded="false" aria-controls="reference-answer">Reveal reference <span aria-hidden="true">↗</span></button><div id="reference-answer" class="reference-answer" hidden></div><div class="example-evaluation"><span>EVALUATED AS</span><b id="example-metric"></b></div></div></div>
+        <div class="example-bottom"><span>Paper · Appendix D</span><button id="full-example" class="text-link">View model responses <span aria-hidden="true">↗</span></button></div>
+      </div></details>
+    </section>
+
+    <section class="construction-section" id="construction" aria-labelledby="construction-title"><div class="section-wrap">
+      <div class="section-heading"><div class="eyebrow">02 / HOW IT IS BUILT</div><h2 id="construction-title">From source reports<br>to <em>supported targets.</em></h2><p>Clinical-state extraction, visual evidence verification and rule-constrained reasoning preserve a traceable path to each benchmark target.</p></div>
+      <figure class="research-figure"><button class="paper-image" data-figure="./assets/construction.webp" data-caption="Figure 3 · The TraceScope Multi-Agent Construction Engine" aria-label="Enlarge Figure 3, the construction engine"><img src="./assets/construction.webp" alt="TraceScope Figure 3: report processing, anatomy routing, evidence verification, task compilation, and a rule-constrained guideline-chain branch with expert review" width="2200" height="660" loading="lazy"><span class="expand-hint" aria-hidden="true">⤢</span></button><figcaption><span class="figure-label">FIG. 3</span><span>Physician expertise, visual support checks, deterministic compilation and executable guideline rules.</span></figcaption></figure>
+    </div></section>
+
+    <section class="section-wrap story-section findings-section" id="axes" aria-labelledby="axes-title">
+      <div class="section-heading"><div class="eyebrow">03 / WHAT WE LEARN</div><h2 id="axes-title">Trace the failure.<br><em>Probe the information interface.</em></h2><p>Two within-case analyses keep the downstream target fixed while changing visual presentation or supplied clinical state.</p></div>
+      <div class="axis-switch" role="tablist" aria-label="Diagnostic axis"><button id="axis-tab-1" role="tab" aria-selected="true" aria-controls="axis-panel" tabindex="0" data-axis="1"><span>AXIS 01</span> Evidence Presentation</button><button id="axis-tab-2" role="tab" aria-selected="false" aria-controls="axis-panel" tabindex="-1" data-axis="2"><span>AXIS 02</span> Diagnostic Cascade</button></div>
+      <div class="axis-panel" id="axis-panel" role="tabpanel" aria-labelledby="axis-tab-1" tabindex="0"><div class="axis-copy"><div class="axis-kicker" id="axis-kicker"></div><h3 id="axis-question"></h3><p id="axis-description"></p><div class="axis-fixed"><span id="axis-fixed"></span></div><div class="axis-states" id="axis-states" aria-label="Information conditions"></div><div class="axis-state-detail" id="axis-state-detail" aria-live="polite"></div></div><div class="axis-chart-wrap"><div class="chart-heading"><b id="axis-chart-title"></b><span id="axis-chart-population"></span></div><div class="axis-chart" id="axis-chart"></div><div class="chart-key" id="axis-chart-key"></div><p class="chart-note" id="axis-chart-note"></p></div></div>
+      <div class="axes-takeaway"><span aria-hidden="true">↳</span><p id="axis-takeaway"></p></div>
+
+      <details class="expandable" id="results"><summary><span>Explore the stage-resolved main board <small>22 models · 6 tasks · 19 readouts</small></span><span class="expand-mark" aria-hidden="true">+</span></summary><div class="expandable-body results-detail">
+        <div class="board-toolbar"><p>Model strengths vary across clinical stages.</p><a class="text-link" href="./data/benchmark.json" download="tracescope-results.json">Download results <span aria-hidden="true">↓</span></a></div><div class="results-tabs" id="results-tabs" role="tablist" aria-label="Results by task"></div><div class="board-controls"><label class="search-field"><span aria-hidden="true">⌕</span><input id="model-search" type="search" placeholder="Find a model…" aria-label="Search models"></label><label class="family-filter"><span class="sr-only">Model family</span><select id="family-filter"><option value="all">All model families</option><option value="Proprietary">Proprietary</option><option value="General-purpose">General-purpose</option><option value="Video-native">Video-native</option><option value="Medical">Medical</option></select></label><label class="reference-toggle"><input type="checkbox" id="show-physician"> Physician reference</label></div><p class="metric-description" id="metric-description"></p><div class="table-scroll" role="region" aria-label="Model results, horizontally scrollable" tabindex="0"><table id="results-table"><caption class="sr-only">TraceScope main-board results. Click a metric heading to sort its column.</caption><thead id="results-head"></thead><tbody id="results-body"></tbody><tfoot id="results-foot"></tfoot></table></div><div class="board-bottom"><span id="model-count" aria-live="polite"></span><button id="show-all-models" class="text-link" aria-expanded="false">Show all 22 models <span aria-hidden="true">↓</span></button></div>
+        <p class="results-footnote">Table 2 of the manuscript. Metrics use their own eligible populations. Physician scores are a separate reference on the blinded 295-question reader-study panel.</p>
+      </div></details>
+    </section>
+  </main>
+  <footer class="section-wrap site-footer"><div><a href="#home" class="brand"><img src="./assets/favicon.svg" width="26" height="26" alt=""><span>TraceScope<span class="brand-dot">.</span></span></a><p>Tracing failures from evidence to decision.</p></div><div class="footer-links"><a data-paper href="./assets/tracescope.pdf" target="_blank" rel="noopener">Paper ↗</a><a data-repository href="https://github.com/Scatteredrain/TraceScope" target="_blank" rel="noopener">GitHub ↗</a><a id="dataset-link" hidden></a><a href="#home">Back to top ↑</a></div></footer>
+  <dialog id="figure-dialog" aria-labelledby="figure-dialog-title"><div class="dialog-toolbar"><h2 id="figure-dialog-title">Evidence</h2><div class="dialog-tools"><button id="zoom-out" class="icon-button" aria-label="Zoom out image">−</button><span id="zoom-level" aria-live="polite">100%</span><button id="zoom-in" class="icon-button" aria-label="Zoom in image">+</button><button id="zoom-fit" class="zoom-fit">Fit</button><button id="close-dialog" class="icon-button" aria-label="Close image">×</button></div></div><div class="dialog-image-wrap"><img id="dialog-image" alt=""></div></dialog>
+  <noscript><div class="noscript-note">Enable JavaScript for the interactive examples and results. The paper and Figures 1–3 remain available above.</div></noscript>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,998 @@
+{
+  "source": "TraceScope manuscript v4, Table 2; frozen diagnostic-axis packages",
+  "tasks": [
+    {
+      "id": "T1",
+      "name": "Anatomy",
+      "title": "Anatomical site recognition",
+      "count": 1572,
+      "evidence": "Single image",
+      "metric": "Station accuracy",
+      "indices": [
+        0,
+        1
+      ],
+      "image": "assets/task-1-evidence-1.webp",
+      "example": "assets/task-1-example.webp",
+      "question": "Which station is this endoscopy frame documenting?",
+      "form": "Single choice",
+      "options": [
+        "Cardia",
+        "Gastric fundus",
+        "Pylorus",
+        "Gastric antrum"
+      ],
+      "reference": "A · Cardia",
+      "explanation": "Exact match against the physician-stated anatomical reference.",
+      "caption": "One physician-annotated examination frame",
+      "label": "SINGLE-IMAGE EVIDENCE"
+    },
+    {
+      "id": "T2",
+      "name": "Findings",
+      "title": "Abnormal finding assessment",
+      "count": 3767,
+      "evidence": "Matched multi-image",
+      "metric": "Exact set agreement",
+      "indices": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "image": "assets/task-2-evidence-1.webp",
+      "example": "assets/task-2-example.webp",
+      "question": "List the abnormal findings visible in this endoscopic image of the gastric angulus.",
+      "form": "Select all that apply",
+      "options": [
+        "Irregular glandular structure",
+        "Depression",
+        "Thinned mucosa",
+        "Fistula / sinus tract"
+      ],
+      "reference": "A + B · Irregular glandular structure; depression",
+      "explanation": "The full finding set must match. Recognizing one finding is insufficient for exact-set agreement.",
+      "caption": "Three matched frames · Gastric angulus",
+      "label": "MATCHED VISUAL EVIDENCE"
+    },
+    {
+      "id": "T3",
+      "name": "Attributes",
+      "title": "Finding attribute specification",
+      "count": 895,
+      "evidence": "Matched multi-image",
+      "metric": "Unit-aware numeric matching",
+      "indices": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "image": "assets/task-3-evidence-1.webp",
+      "example": "assets/task-3-example.webp",
+      "question": "This endoscopic image shows the esophagus. Describe the size of the mucosal break / defect.",
+      "form": "Open quantitative answer",
+      "options": [],
+      "reference": "5 mm",
+      "explanation": "The reference is a quantitative size slot; evaluation normalizes units before numeric matching.",
+      "caption": "Three matched frames · Esophagus",
+      "label": "ATTRIBUTE-SPECIFIC EVIDENCE"
+    },
+    {
+      "id": "T4",
+      "name": "Report",
+      "title": "Findings report generation",
+      "count": 600,
+      "evidence": "Examination-level images",
+      "metric": "Site coverage · Finding recall",
+      "indices": [
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "image": "assets/task-4-evidence-1.webp",
+      "example": "assets/task-4-example.webp",
+      "question": "These are all the images retained from one upper-GI endoscopy. Write the endoscopic findings, organised site by site.",
+      "form": "Free-text report",
+      "options": [],
+      "reference": "A site-indexed findings report",
+      "explanation": "Reference excerpt — Gastric body: mucosa gray-white; scattered white areas on the lesser curvature; a xanthoma; rough, slightly depressed mucosa on the lesser curvature, biopsied. The complete report is in the paper example.",
+      "caption": "Representative frames from the examination",
+      "label": "EXAMINATION-LEVEL EVIDENCE"
+    },
+    {
+      "id": "T5",
+      "name": "Impression",
+      "title": "Diagnostic impression prediction",
+      "count": 1637,
+      "evidence": "Matched multi-image",
+      "metric": "Impression accuracy",
+      "indices": [
+        16
+      ],
+      "image": "assets/task-5-evidence-1.webp",
+      "example": "assets/task-5-example.webp",
+      "question": "Based on these endoscopic images, give the endoscopic diagnosis.",
+      "form": "Single choice",
+      "options": [
+        "Portal hypertensive gastropathy",
+        "Gastric bezoar",
+        "Gastric antral vascular ectasia (GAVE)",
+        "Gastric retention"
+      ],
+      "reference": "A · Portal hypertensive gastropathy",
+      "explanation": "The reference is the endoscopic impression. The complete example includes predictions from all 22 models.",
+      "caption": "Matched evidence across the examination",
+      "label": "DIAGNOSTIC-IMPRESSION EVIDENCE"
+    },
+    {
+      "id": "T6",
+      "name": "Guidelines",
+      "title": "Guideline-grounded clinical reasoning",
+      "count": 635,
+      "evidence": "Matched multi-image",
+      "metric": "Grade agreement · Reasoning consistency",
+      "indices": [
+        17,
+        18
+      ],
+      "image": "assets/task-6-evidence-1.webp",
+      "example": "assets/task-6-example.webp",
+      "question": "Grade this case according to the Paris Classification + MESDA-G Guideline for Early Gastric Cancer, and state the signs your grade rests on.",
+      "form": "Structured reasoning",
+      "options": [],
+      "reference": "Paris grade · 0-IIc",
+      "explanation": "Evaluation separates exact grade agreement from sign recovery and reference-consistent reasoning. See the full paper example for the sign set and model chains.",
+      "caption": "Four matched frames · Paris + MESDA-G",
+      "label": "GUIDELINE-RELEVANT EVIDENCE"
+    }
+  ],
+  "metrics": [
+    {
+      "label": "Gastric site",
+      "description": "Accuracy on gastric-site recognition"
+    },
+    {
+      "label": "Organ",
+      "description": "Accuracy on organ recognition"
+    },
+    {
+      "label": "Normal state",
+      "description": "Normal-state judgment accuracy"
+    },
+    {
+      "label": "Finding presence",
+      "description": "Single-finding presence accuracy"
+    },
+    {
+      "label": "Enumeration · single",
+      "description": "Single-choice finding enumeration accuracy"
+    },
+    {
+      "label": "Enumeration · exact set",
+      "description": "Exact-set accuracy on select-all finding enumeration"
+    },
+    {
+      "label": "Size · MRA",
+      "description": "Mean relative accuracy for quantitative size answers"
+    },
+    {
+      "label": "Count · MRA",
+      "description": "Mean relative accuracy for quantitative count answers"
+    },
+    {
+      "label": "Position / distribution",
+      "description": "Categorical position and distribution accuracy"
+    },
+    {
+      "label": "Morphology",
+      "description": "Morphology accuracy"
+    },
+    {
+      "label": "Color",
+      "description": "Color accuracy"
+    },
+    {
+      "label": "Site coverage",
+      "description": "Coverage of canonical anatomical sites"
+    },
+    {
+      "label": "Finding recall",
+      "description": "Canonical finding recall"
+    },
+    {
+      "label": "ROUGE-L",
+      "description": "Wording-sensitive ROUGE-L control"
+    },
+    {
+      "label": "BioBERTScore",
+      "description": "Biomedical embedding similarity control"
+    },
+    {
+      "label": "SEFR · judge",
+      "description": "Judge-based report quality readout; descriptive"
+    },
+    {
+      "label": "Impression",
+      "description": "Diagnostic-impression accuracy"
+    },
+    {
+      "label": "Grade agreement",
+      "description": "Exact guideline-grade agreement"
+    },
+    {
+      "label": "ELRC · judge",
+      "description": "Judge-based reference-consistent reasoning readout; descriptive"
+    }
+  ],
+  "models": [
+    {
+      "name": "GPT-5.4",
+      "family": "Proprietary",
+      "scores": [
+        0.449,
+        0.69,
+        0.882,
+        0.923,
+        0.576,
+        0.152,
+        0.556,
+        0.473,
+        0.573,
+        0.432,
+        0.508,
+        0.804,
+        0.301,
+        0.148,
+        0.715,
+        0.484,
+        0.487,
+        0.318,
+        0.619
+      ]
+    },
+    {
+      "name": "Claude Opus 4.7",
+      "family": "Proprietary",
+      "scores": [
+        0.661,
+        0.857,
+        0.919,
+        0.925,
+        0.573,
+        0.15,
+        0.527,
+        0.263,
+        0.67,
+        0.551,
+        0.646,
+        0.888,
+        0.397,
+        0.153,
+        0.715,
+        0.532,
+        0.399,
+        0.378,
+        0.655
+      ]
+    },
+    {
+      "name": "Gemini 3.8 Flash",
+      "family": "Proprietary",
+      "scores": [
+        0.765,
+        0.833,
+        0.897,
+        0.908,
+        0.599,
+        0.2,
+        0.569,
+        0.54,
+        0.67,
+        0.503,
+        0.538,
+        0.945,
+        0.339,
+        0.151,
+        0.72,
+        0.489,
+        0.605,
+        0.362,
+        0.618
+      ]
+    },
+    {
+      "name": "InternVL3.5-8B",
+      "family": "General-purpose",
+      "scores": [
+        0.401,
+        0.312,
+        0.642,
+        0.917,
+        0.534,
+        0.138,
+        0.234,
+        0.294,
+        0.519,
+        0.362,
+        0.6,
+        0.64,
+        0.347,
+        0.171,
+        0.723,
+        0.458,
+        0.47,
+        0.311,
+        0.469
+      ]
+    },
+    {
+      "name": "InternVL3.5-14B",
+      "family": "General-purpose",
+      "scores": [
+        0.475,
+        0.192,
+        0.874,
+        0.911,
+        0.604,
+        0.179,
+        0.504,
+        0.227,
+        0.553,
+        0.395,
+        0.631,
+        0.455,
+        0.156,
+        0.143,
+        0.707,
+        0.451,
+        0.469,
+        0.327,
+        0.485
+      ]
+    },
+    {
+      "name": "MiniCPM-V-4.5 (8B)",
+      "family": "General-purpose",
+      "scores": [
+        0.456,
+        0.185,
+        0.782,
+        0.935,
+        0.432,
+        0.14,
+        0.521,
+        0.517,
+        0.453,
+        0.346,
+        0.435,
+        0.746,
+        0.409,
+        0.149,
+        0.709,
+        0.435,
+        0.509,
+        0.299,
+        0.438
+      ]
+    },
+    {
+      "name": "Qwen3-VL-4B",
+      "family": "General-purpose",
+      "scores": [
+        0.346,
+        0.181,
+        0.802,
+        0.834,
+        0.543,
+        0.112,
+        0.393,
+        0.443,
+        0.524,
+        0.427,
+        0.677,
+        0.518,
+        0.294,
+        0.142,
+        0.712,
+        0.401,
+        0.503,
+        0.289,
+        0.413
+      ]
+    },
+    {
+      "name": "Qwen3-VL-8B",
+      "family": "General-purpose",
+      "scores": [
+        0.322,
+        0.235,
+        0.746,
+        0.927,
+        0.537,
+        0.132,
+        0.225,
+        0.412,
+        0.539,
+        0.427,
+        0.677,
+        0.567,
+        0.286,
+        0.126,
+        0.721,
+        0.423,
+        0.603,
+        0.278,
+        0.416
+      ]
+    },
+    {
+      "name": "Qwen3-VL-32B",
+      "family": "General-purpose",
+      "scores": [
+        0.339,
+        0.477,
+        0.893,
+        0.941,
+        0.602,
+        0.131,
+        0.44,
+        0.498,
+        0.597,
+        0.503,
+        0.692,
+        0.815,
+        0.453,
+        0.144,
+        0.723,
+        0.425,
+        0.602,
+        0.291,
+        0.517
+      ]
+    },
+    {
+      "name": "Qwen3.5-4B",
+      "family": "General-purpose",
+      "scores": [
+        0.349,
+        0.669,
+        0.807,
+        0.899,
+        0.437,
+        0.058,
+        0.404,
+        0.34,
+        0.476,
+        0.395,
+        0.585,
+        0.539,
+        0.343,
+        0.179,
+        0.73,
+        0.401,
+        0.307,
+        0.329,
+        0.458
+      ]
+    },
+    {
+      "name": "Qwen3.5-9B",
+      "family": "General-purpose",
+      "scores": [
+        0.426,
+        0.521,
+        0.821,
+        0.937,
+        0.559,
+        0.12,
+        0.403,
+        0.422,
+        0.519,
+        0.411,
+        0.708,
+        0.578,
+        0.516,
+        0.174,
+        0.74,
+        0.417,
+        0.396,
+        0.348,
+        0.498
+      ]
+    },
+    {
+      "name": "Qwen3.5-27B",
+      "family": "General-purpose",
+      "scores": [
+        0.608,
+        0.585,
+        0.916,
+        0.935,
+        0.655,
+        0.185,
+        0.526,
+        0.305,
+        0.544,
+        0.492,
+        0.708,
+        0.74,
+        0.43,
+        0.184,
+        0.749,
+        0.456,
+        0.631,
+        0.354,
+        0.561
+      ]
+    },
+    {
+      "name": "LLaVA-NeXT-Video-7B",
+      "family": "Video-native",
+      "scores": [
+        0.244,
+        0.326,
+        0.556,
+        0.15,
+        0.268,
+        0.027,
+        0.009,
+        0.0,
+        0.374,
+        0.254,
+        0.508,
+        0.197,
+        0.078,
+        0.133,
+        0.678,
+        0.371,
+        0.364,
+        0.155,
+        0.296
+      ]
+    },
+    {
+      "name": "VideoChat-Flash-7B",
+      "family": "Video-native",
+      "scores": [
+        0.338,
+        0.31,
+        0.593,
+        0.73,
+        0.248,
+        0.093,
+        0.019,
+        0.519,
+        0.447,
+        0.335,
+        0.308,
+        0.228,
+        0.023,
+        0.139,
+        0.699,
+        0.426,
+        0.461,
+        0.25,
+        0.416
+      ]
+    },
+    {
+      "name": "ColonR1 (3B)",
+      "family": "Medical",
+      "scores": [
+        0.163,
+        0.683,
+        0.519,
+        0.197,
+        0.287,
+        0.026,
+        0.292,
+        0.128,
+        0.408,
+        0.27,
+        0.4,
+        0.249,
+        0.179,
+        0.144,
+        0.693,
+        0.439,
+        0.523,
+        0.252,
+        0.421
+      ]
+    },
+    {
+      "name": "CE-R1 (7B)",
+      "family": "Medical",
+      "scores": [
+        0.373,
+        0.188,
+        0.38,
+        0.591,
+        0.498,
+        0.108,
+        0.039,
+        0.12,
+        0.325,
+        0.465,
+        0.723,
+        0.048,
+        0.015,
+        0.133,
+        0.673,
+        0.317,
+        0.586,
+        0.051,
+        0.224
+      ]
+    },
+    {
+      "name": "HealthGPT-Pro-8B",
+      "family": "Medical",
+      "scores": [
+        0.384,
+        0.556,
+        0.701,
+        0.942,
+        0.627,
+        0.143,
+        0.428,
+        0.626,
+        0.481,
+        0.422,
+        0.723,
+        0.362,
+        0.084,
+        0.07,
+        0.68,
+        0.405,
+        0.547,
+        0.248,
+        0.412
+      ]
+    },
+    {
+      "name": "Hulu-Med-4B",
+      "family": "Medical",
+      "scores": [
+        0.409,
+        0.103,
+        0.766,
+        0.945,
+        0.49,
+        0.072,
+        0.399,
+        0.809,
+        0.485,
+        0.286,
+        0.431,
+        0.646,
+        0.164,
+        0.157,
+        0.716,
+        0.445,
+        0.516,
+        0.258,
+        0.394
+      ]
+    },
+    {
+      "name": "Hulu-Med-7B",
+      "family": "Medical",
+      "scores": [
+        0.545,
+        0.467,
+        0.785,
+        0.918,
+        0.518,
+        0.125,
+        0.403,
+        0.235,
+        0.495,
+        0.416,
+        0.523,
+        0.261,
+        0.091,
+        0.147,
+        0.74,
+        0.465,
+        0.395,
+        0.256,
+        0.377
+      ]
+    },
+    {
+      "name": "Lingshu-I-8B",
+      "family": "Medical",
+      "scores": [
+        0.439,
+        0.603,
+        0.762,
+        0.901,
+        0.582,
+        0.107,
+        0.472,
+        0.282,
+        0.388,
+        0.395,
+        0.646,
+        0.434,
+        0.129,
+        0.145,
+        0.714,
+        0.429,
+        0.409,
+        0.291,
+        0.419
+      ]
+    },
+    {
+      "name": "Lingshu-32B",
+      "family": "Medical",
+      "scores": [
+        0.437,
+        0.592,
+        0.712,
+        0.937,
+        0.607,
+        0.112,
+        0.468,
+        0.387,
+        0.495,
+        0.389,
+        0.462,
+        0.44,
+        0.171,
+        0.182,
+        0.727,
+        0.459,
+        0.602,
+        0.267,
+        0.439
+      ]
+    },
+    {
+      "name": "MedGRPO-7B",
+      "family": "Medical",
+      "scores": [
+        0.388,
+        0.268,
+        0.542,
+        0.797,
+        0.466,
+        0.102,
+        0.2,
+        0.321,
+        0.529,
+        0.422,
+        0.492,
+        0.242,
+        0.071,
+        0.153,
+        0.729,
+        0.409,
+        0.524,
+        0.246,
+        0.393
+      ]
+    }
+  ],
+  "random": {
+    "name": "random",
+    "family": "",
+    "scores": [
+      0.25,
+      0.25,
+      0.5,
+      0.5,
+      0.252,
+      0.067,
+      null,
+      null,
+      0.252,
+      0.25,
+      0.25,
+      null,
+      null,
+      null,
+      null,
+      null,
+      0.251,
+      null,
+      null
+    ]
+  },
+  "physician": {
+    "name": "physician (subset)",
+    "family": "",
+    "scores": [
+      1.0,
+      1.0,
+      0.943,
+      0.947,
+      1.0,
+      0.6,
+      0.65,
+      0.836,
+      0.8,
+      0.8,
+      1.0,
+      0.988,
+      0.54,
+      0.484,
+      0.846,
+      0.702,
+      0.867,
+      0.6,
+      0.659
+    ]
+  },
+  "axis1": {
+    "examinations": 193,
+    "presentations": [
+      "selected multi-image",
+      "retained multi-image",
+      "video-128",
+      "video-256",
+      "video-512"
+    ],
+    "models": [
+      {
+        "id": "qwen3vl_4b",
+        "scores": [
+          0.5077720207253886,
+          0.44559585492227977,
+          0.3471502590673575,
+          0.38341968911917096,
+          0.37305699481865284
+        ]
+      },
+      {
+        "id": "qwen3vl_8b",
+        "scores": [
+          0.6476683937823834,
+          0.49740932642487046,
+          0.538860103626943,
+          0.5440414507772021,
+          0.5803108808290155
+        ]
+      },
+      {
+        "id": "qwen35_4b",
+        "scores": [
+          0.2538860103626943,
+          0.23316062176165803,
+          0.22797927461139897,
+          0.23834196891191708,
+          0.24352331606217617
+        ]
+      },
+      {
+        "id": "qwen35_9b",
+        "scores": [
+          0.46113989637305697,
+          0.30569948186528495,
+          0.35233160621761656,
+          0.35751295336787564,
+          0.38341968911917096
+        ]
+      },
+      {
+        "id": "qwen35_27b",
+        "scores": [
+          0.7461139896373057,
+          0.6424870466321243,
+          0.6580310880829016,
+          0.6269430051813472,
+          0.6373056994818653
+        ]
+      },
+      {
+        "id": "healthgpt_pro_8b",
+        "scores": [
+          0.6217616580310881,
+          0.6321243523316062,
+          0.6062176165803109,
+          0.5854922279792746,
+          0.6113989637305699
+        ]
+      },
+      {
+        "id": "hulumed_4b_hf",
+        "scores": [
+          0.6994818652849741,
+          0.5854922279792746,
+          0.5906735751295337,
+          0.616580310880829,
+          0.6580310880829016
+        ]
+      },
+      {
+        "id": "hulumed_7b_hf",
+        "scores": [
+          0.45077720207253885,
+          0.43005181347150256,
+          0.29015544041450775,
+          0.31088082901554404,
+          0.30569948186528495
+        ]
+      },
+      {
+        "id": "medgrpo_7b",
+        "scores": [
+          0.39896373056994816,
+          0.40414507772020725,
+          0.42487046632124353,
+          0.37823834196891193,
+          0.31088082901554404
+        ]
+      }
+    ],
+    "means": [
+      0.5319516407599308,
+      0.46401842256764536,
+      0.44847438111686816,
+      0.44905008635578586,
+      0.455958549222798
+    ]
+  },
+  "axis2": {
+    "examinations": 1220,
+    "models": 19,
+    "states": [
+      {
+        "state": "S0",
+        "n_models": 19.0,
+        "mean_kappa": 0.0855257642224,
+        "mean_sensitivity": 0.666781332416,
+        "mean_specificity": 0.414274846117,
+        "mean_balanced_accuracy": 0.540528089266,
+        "mean_invalid_rate": 0.0107420189819
+      },
+      {
+        "state": "S1",
+        "n_models": 19.0,
+        "mean_kappa": 0.0711266213872,
+        "mean_sensitivity": 0.633298933609,
+        "mean_specificity": 0.427000484128,
+        "mean_balanced_accuracy": 0.530149708868,
+        "mean_invalid_rate": 0.0145383951682
+      },
+      {
+        "state": "S2",
+        "n_models": 19.0,
+        "mean_kappa": 0.112508405169,
+        "mean_sensitivity": 0.790735007453,
+        "mean_specificity": 0.312953869562,
+        "mean_balanced_accuracy": 0.551844438508,
+        "mean_invalid_rate": 0.0272648835203
+      },
+      {
+        "state": "S2+SK_pol",
+        "n_models": 19.0,
+        "mean_kappa": 0.188371105552,
+        "mean_sensitivity": 0.785804380232,
+        "mean_specificity": 0.408326993568,
+        "mean_balanced_accuracy": 0.5970656869,
+        "mean_invalid_rate": 0.018636755824
+      },
+      {
+        "state": "S2+SK_pol_thr",
+        "n_models": 19.0,
+        "mean_kappa": 0.230204991662,
+        "mean_sensitivity": 0.749455337691,
+        "mean_specificity": 0.489522096964,
+        "mean_balanced_accuracy": 0.619488717327,
+        "mean_invalid_rate": 0.0105263157895
+      }
+    ]
+  },
+  "provenance": {
+    "overleaf/tables/tab_main_overview_v6_3_compact.tex": "3cbb41991dca5a39c0aa107cfb802d6f97318e12dd8131be606be4a664e11c4d",
+    "Report-Grounded-VQA-Synthesis/data/axis1/canonical/axis1_t5_primary_analysis.json": "2fb2a13f82dc893250c04f54812a92e4fb88af1eda2f83ad9d4e9f560e61fdb0",
+    "Report-Grounded-VQA-Synthesis/data/axis2/tables/classwise_summary.csv": "40dd49185c56df22949da852b5ef05e1789a0e7d744c274f524587f491b6b7ee"
+  }
+}

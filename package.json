@@ -1,0 +1,14 @@
+{
+  "name": "tracescope-project-page",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The TraceScope research project website",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "check": "node scripts/check.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs --production"
+  },
+  "engines": { "node": ">=20" }
+}
