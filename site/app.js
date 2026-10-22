@@ -93,12 +93,10 @@ async function initialize() {
   if (!response.ok) throw new Error(`Could not load benchmark data (${response.status}).`);
   const data = await response.json();
   let selectedTask = 1;
-  let resultTask = 0;
   let selectedAxis = 1;
   let axisState = 0;
   let sortMetric = null;
   let sortDescending = true;
-  let showAll = false;
 
   $('#example-tabs').innerHTML = data.tasks.map((task, i) => `<button type="button" id="example-tab-${i}" role="tab" aria-controls="example-panel" data-task="${i}"><span>${escapeHTML(task.id)}</span>${escapeHTML(task.name)}</button>`).join('');
   for (const button of $$('#example-tabs button')) button.addEventListener('click', () => renderExample(Number(button.dataset.task)));
@@ -243,40 +241,47 @@ async function initialize() {
   }
   renderAxis();
 
-  $('#results-tabs').innerHTML = data.tasks.map((task, i) => `<button type="button" role="tab" id="result-tab-${i}" aria-controls="results-table" data-result-task="${i}">${escapeHTML(task.id)} · ${escapeHTML(task.name)}</button>`).join('');
-  for (const button of $$('#results-tabs button')) button.addEventListener('click', () => {
-    resultTask = Number(button.dataset.resultTask);
+  // The default viewing order balances the six tasks. Average tied ranks within
+  // each deterministic readout, then within each task, then across tasks.
+  // SEFR and ELRC are descriptive judge readouts, so they do not set this order.
+  const judgeMetrics = new Set([15, 18]);
+  const metricRanks = data.models.map(model => data.metrics.map((_, index) => {
+    const higher = data.models.filter(other => other.scores[index] > model.scores[index]).length;
+    const tied = data.models.filter(other => other.scores[index] === model.scores[index]).length;
+    return 1 + higher + (tied - 1) / 2;
+  }));
+  const overallRanks = new Map(data.models.map((model, position) => {
+    const taskRanks = data.tasks.map(task => {
+      const indices = task.indices.filter(index => !judgeMetrics.has(index));
+      return indices.reduce((sum, index) => sum + metricRanks[position][index], 0) / indices.length;
+    });
+    return [model.name, taskRanks.reduce((sum, rank) => sum + rank, 0) / taskRanks.length];
+  }));
+  const indices = data.tasks.flatMap(task => task.indices);
+  const taskStarts = new Set(data.tasks.map(task => task.indices[0]));
+  const compactLabels = { 4: 'Enum. · single', 5: 'Enum. · exact set', 8: 'Position / dist.', 14: 'BioBERT' };
+  const maxima = data.metrics.map((_, index) => Math.max(...data.models.map(model => model.scores[index] ?? -1)));
+
+  $('#overall-sort').addEventListener('click', () => {
     sortMetric = null;
     renderResults();
   });
-  tabKeyboard($('#results-tabs'));
   for (const id of ['model-search', 'family-filter', 'show-physician']) $(`#${id}`).addEventListener(id === 'model-search' ? 'input' : 'change', renderResults);
-  $('#show-all-models').addEventListener('click', () => { showAll = !showAll; renderResults(); });
   function renderResults() {
-    const task = data.tasks[resultTask];
-    for (const button of $$('#results-tabs button')) {
-      const active = Number(button.dataset.resultTask) === resultTask;
-      button.setAttribute('aria-selected', String(active));
-      button.tabIndex = active ? 0 : -1;
-    }
     const query = $('#model-search').value.trim().toLocaleLowerCase();
     const family = $('#family-filter').value;
     const matches = data.models.filter(model => (family === 'all' || model.family === family) && model.name.toLocaleLowerCase().includes(query));
-    if (sortMetric !== null) matches.sort((a, b) => (sortDescending ? -1 : 1) * ((a.scores[sortMetric] ?? -1) - (b.scores[sortMetric] ?? -1)));
-    const displayed = showAll ? matches : matches.slice(0, 8);
-    const maxima = task.indices.map(index => Math.max(...data.models.map(model => model.scores[index] ?? -1)));
-    $('#results-head').innerHTML = `<tr><th scope="col">Model / family</th>${task.indices.map(index => `<th scope="col" aria-sort="${sortMetric === index ? (sortDescending ? 'descending' : 'ascending') : 'none'}"><button type="button" data-sort="${index}" title="${escapeHTML(data.metrics[index].description)}. Click to sort.">${escapeHTML(data.metrics[index].label)}<span class="sort-indicator" aria-hidden="true">${sortMetric === index ? (sortDescending ? '↓' : '↑') : '↕'}</span></button></th>`).join('')}</tr>`;
-    const scoreCells = (model, highlight = false) => task.indices.map((index, position) => {
+    const compareOverall = (a, b) => overallRanks.get(a.name) - overallRanks.get(b.name);
+    matches.sort((a, b) => sortMetric === null ? compareOverall(a, b) : (sortDescending ? -1 : 1) * (a.scores[sortMetric] - b.scores[sortMetric]) || compareOverall(a, b));
+    $('#overall-sort').setAttribute('aria-pressed', String(sortMetric === null));
+    $('#results-head').innerHTML = `<tr class="task-groups"><th scope="col" rowspan="2" class="model-heading">Model<small>Family</small></th>${data.tasks.map(task => `<th scope="colgroup" colspan="${task.indices.length}" class="task-group task-${task.id.toLowerCase()}" id="group-${task.id}"><span>${escapeHTML(task.id)}</span>${escapeHTML(task.name)}<small>${number(task.count)} items</small></th>`).join('')}</tr><tr class="metric-headings">${indices.map(index => `<th scope="col" id="metric-${index}" class="${taskStarts.has(index) ? 'task-start' : ''}" aria-sort="${sortMetric === index ? (sortDescending ? 'descending' : 'ascending') : 'none'}"><button type="button" data-sort="${index}" title="${escapeHTML(data.metrics[index].label)}: ${escapeHTML(data.metrics[index].description)}. Click to sort.">${escapeHTML(compactLabels[index] || data.metrics[index].label)}<span class="sort-indicator" aria-hidden="true">${sortMetric === index ? (sortDescending ? '↓' : '↑') : '↕'}</span></button></th>`).join('')}</tr>`;
+    const scoreCells = (model, highlight = false) => indices.map(index => {
       const score = model.scores[index];
-      return `<td class="score-cell ${highlight && score === maxima[position] ? 'best' : ''}"><span style="--heat:${score === null ? 0 : .08 + score * .5}">${score === null ? '—' : score.toFixed(3)}</span></td>`;
+      return `<td class="score-cell ${taskStarts.has(index) ? 'task-start' : ''} ${highlight && score === maxima[index] ? 'best' : ''}"><span style="--heat:${score === null ? 0 : .08 + score * .5}">${score === null ? '—' : score.toFixed(3)}</span></td>`;
     }).join('');
-    $('#results-body').innerHTML = displayed.length ? displayed.map(model => `<tr><th class="model-cell" scope="row">${escapeHTML(model.name)}<small>${escapeHTML(model.family)}</small></th>${scoreCells(model, true)}</tr>`).join('') : `<tr class="empty-row"><td colspan="${task.indices.length + 1}">No models match. Try another name or model family.</td></tr>`;
+    $('#results-body').innerHTML = matches.length ? matches.map(model => `<tr><th class="model-cell" scope="row"><span class="model-name">${escapeHTML(model.name)}</span><small>${escapeHTML(model.family)}</small></th>${scoreCells(model, true)}</tr>`).join('') : `<tr class="empty-row"><td colspan="${indices.length + 1}"><span>No models match. Try another name or model family.</span></td></tr>`;
     $('#results-foot').innerHTML = `<tr><th scope="row">Random reference</th>${scoreCells(data.random)}</tr>` + ($('#show-physician').checked ? `<tr><th scope="row">Physician · reader-study subset</th>${scoreCells(data.physician)}</tr>` : '');
-    $('#metric-description').textContent = `${task.title} · ${number(task.count)} main-board items. Scores on a 0–1 scale. Outlined cells indicate the best model readout across all 22 models. Judge readouts are descriptive.`;
-    $('#model-count').textContent = `${displayed.length} of ${matches.length} models${sortMetric === null ? ' · Paper order' : ` · Sorted by ${data.metrics[sortMetric].label}`}`;
-    $('#show-all-models').hidden = matches.length <= 8;
-    $('#show-all-models').setAttribute('aria-expanded', String(showAll));
-    $('#show-all-models').innerHTML = showAll ? 'Show fewer models <span aria-hidden="true">↑</span>' : `Show all ${matches.length} models <span aria-hidden="true">↓</span>`;
+    $('#model-count').textContent = `${matches.length} of ${data.models.length} models · ${sortMetric === null ? 'Overall performance' : `${data.metrics[sortMetric].label} ${sortDescending ? '↓' : '↑'}`}`;
     for (const button of $$('[data-sort]')) button.addEventListener('click', () => {
       const index = Number(button.dataset.sort);
       sortDescending = sortMetric === index ? !sortDescending : true;

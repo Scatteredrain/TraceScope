@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import json
 import os
+from itertools import groupby
 from pathlib import Path
+from statistics import mean
 
 from playwright.sync_api import sync_playwright
 
@@ -19,6 +21,19 @@ BASE = os.environ.get("TRACESCOPE_PREVIEW_URL", "http://127.0.0.1:4173/")
 def main() -> None:
     OUTPUT.mkdir(exist_ok=True)
     data = json.loads((ROOT / "site/data/benchmark.json").read_text())
+    ranks = {model["name"]: {} for model in data["models"]}
+    for index in range(len(data["metrics"])):
+        ordered = sorted(data["models"], key=lambda model: -model["scores"][index])
+        for _, group in groupby(enumerate(ordered, 1), key=lambda entry: entry[1]["scores"][index]):
+            tied = list(group)
+            rank = mean(position for position, _ in tied)
+            for _, model in tied:
+                ranks[model["name"]][index] = rank
+    expected_order = sorted(data["models"], key=lambda model: mean(
+        mean(ranks[model["name"]][i] for i in task["indices"] if i not in (15, 18))
+        for task in data["tasks"]
+    ))
+    assert [model["name"] for model in expected_order[:3]] == ["Qwen3.5-27B", "Gemini 3.8 Flash", "Claude Opus 4.7"]
     results: list[str] = []
     errors: list[str] = []
     requests: list[str] = []
@@ -40,7 +55,16 @@ def main() -> None:
         results.append("Local HTTP 200; data, fonts and images load")
 
         assert not page.locator('#explore').evaluate('element => element.open')
-        assert not page.locator('#results').evaluate('element => element.open')
+        assert page.locator('#results').evaluate('element => element.open')
+        assert page.locator('#results-tabs').count() == 0
+        assert page.locator('#results-head .task-group').count() == 6
+        assert page.locator('#results-head .metric-headings th').count() == 19
+        assert page.locator('#results-body tr').count() == 22
+        assert page.locator('.model-name').all_text_contents() == [model['name'] for model in expected_order]
+        for position, model in enumerate(expected_order):
+            cells = page.locator('#results-body tr').nth(position).locator('td')
+            assert cells.all_text_contents() == [f'{score:.3f}' for score in model['scores']]
+        results.append('Main board open by default: all six task groups, 22 models and 418 numerical cells; task-balanced overall order verified independently')
         for figure in ['overview', 'composition', 'construction']:
             page.locator(f'[data-figure="./assets/{figure}.webp"]').click()
             page.locator('#dialog-image').evaluate('image => image.decode()')
@@ -86,11 +110,6 @@ def main() -> None:
         page.screenshot(path=str(OUTPUT / "diagnostic-axes.png"))
         results.append("Both diagnostic axes and all state values agree with frozen aggregates")
 
-        page.locator("#results > summary").click()
-        for i, task in enumerate(data["tasks"]):
-            page.locator(f"#result-tab-{i}").click()
-            assert page.locator("#results-head th").count() == len(task["indices"]) + 1
-        page.locator("#result-tab-4").click()
         page.locator('[data-sort="16"]').click()
         assert "Qwen3.5-27B" in page.locator("#results-body tr").first.inner_text()
         page.locator('[data-sort="16"]').click()
@@ -101,22 +120,35 @@ def main() -> None:
         assert "No models match" in page.locator("#results-body").inner_text()
         page.locator("#model-search").fill("")
         assert page.locator("#results-body tr").count() == 8
+        page.locator('#overall-sort').click()
+        assert page.locator('.model-name').all_text_contents() == [model['name'] for model in expected_order if model['family'] == 'Medical']
         page.locator("#family-filter").select_option("all")
-        page.locator("#show-all-models").click()
         assert page.locator("#results-body tr").count() == 22
+        assert page.locator('.model-name').all_text_contents() == [model['name'] for model in expected_order]
+        assert page.locator('#overall-sort').get_attribute('aria-pressed') == 'true'
         page.locator("#show-physician").check()
         assert page.locator("#results-foot tr").count() == 2
-        results.append("All 19 table readouts, ascending/descending sorting, case-insensitive search, family filtering, empty state, 22-model expansion and physician reference")
+        results.append("Ascending/descending metric sorting, overall-order reset, case-insensitive search, stable family filtering, empty state and physician reference")
 
         page.locator("#show-physician").uncheck()
-        page.locator("#show-all-models").click()
-        page.locator("#result-tab-0").click()
         page.locator("#axis-tab-1").click()
+        page.locator('.table-scroll').evaluate('element => element.scrollLeft = 0')
+        page.locator('.board-toolbar > p').click()
+        page.locator('#results').evaluate('element => element.scrollIntoView({block: "start"})')
+        page.screenshot(path=str(OUTPUT / 'main-board.png'))
+        page.set_viewport_size({'width': 1760, 'height': 1000})
+        page.locator('#results').evaluate('element => element.scrollIntoView({block: "start"})')
+        page.screenshot(path=str(OUTPUT / 'main-board-wide.png'))
         for width, height in [(1440, 1000), (1024, 850), (768, 1024), (390, 844), (375, 812), (319, 812)]:
             page.set_viewport_size({"width": width, "height": height})
             page.evaluate("window.scrollTo(0, 0)")
             dimensions = page.evaluate("({ width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth })")
             assert dimensions["scroll"] <= dimensions["width"], f"Horizontal overflow at {width}px: {dimensions}"
+            frozen = page.locator('#results-body th').first.bounding_box()['x']
+            page.locator('.table-scroll').evaluate('element => element.scrollLeft = element.scrollWidth')
+            assert abs(page.locator('#results-body th').first.bounding_box()['x'] - frozen) < 1
+            assert page.locator('.model-name').first.is_visible()
+            page.locator('.table-scroll').evaluate('element => element.scrollLeft = 0')
             if width == 390:
                 page.screenshot(path=str(OUTPUT / "mobile.png"))
                 page.locator(".menu-toggle").click()
@@ -127,12 +159,12 @@ def main() -> None:
                 assert page.locator("#example-title").inner_text() == data["tasks"][5]["title"]
                 page.locator("#reveal-answer").click()
                 assert page.locator("#reference-answer").is_visible()
-        results.append("Responsive layout at 319, 375, 390, 768, 1024 and 1440px; mobile menu and task interaction")
+        results.append("Responsive layout at 319, 375, 390, 768, 1024 and 1440px; frozen model column under horizontal scrolling, mobile menu and task interaction")
 
         page.set_viewport_size({"width": 1440, "height": 1000})
         page.locator("#example-tab-1").click()
         page.locator('#explore > summary').click()
-        page.locator('#results > summary').click()
+        assert page.locator('#results').evaluate('element => element.open')
         page.evaluate("window.scrollTo(0, 0)")
         page.screenshot(path=str(OUTPUT / "full-page.png"), full_page=True)
         report_height = page.evaluate('document.documentElement.scrollHeight')

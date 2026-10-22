@@ -38,7 +38,7 @@ The JSON export records the exact SHA-256 hashes of its three result sources. It
 7. The net-count ≥2 boundary is an added Axis 2 intervention. It is not imposed as a universal main-board T6 rule.
 8. Physician results are a separate 295-question reader-study reference. They do not enter model ranking.
 9. The six explorer tabs are separate representative examples, not six tasks on a single asserted examination. T4/T5 montages show representative frames; the paper specifies the complete delivered sets.
-10. Judge readouts are descriptive complements to deterministic clinical scores. The site retains all 19 published columns and does not compute an overall model rank.
+10. Judge readouts are descriptive complements to deterministic clinical scores. The site retains all 19 published columns. Its default viewing order uses mean ranks across the 17 deterministic readouts: tied scores share their average rank; readout ranks are averaged within each task, and the six task averages receive equal weight. Rankings are computed over all 22 models before search/family filtering. SEFR and ELRC judge readouts, random references and physician references do not enter this order. This website ordering is not an additional manuscript-reported score.
 
 ## Public-release preparation
 

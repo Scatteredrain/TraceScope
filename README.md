@@ -28,11 +28,11 @@ npm run preview
 - A generated brand illustration styled to accompany the paper figures; its prompt and role are documented in `docs/brand-illustration.md`.
 - Six task examples with original paper evidence, reference reveal and full model-response figures.
 - Two interactive diagnostic-axis views built from frozen aggregate results.
-- All 22 models and all 19 Table 2 readouts, with task tabs, search, family filtering, sortable metrics and a separate physician reference.
+- A main board open by default, showing all 22 models and 19 Table 2 readouts in six task groups, with a frozen model column, search, family filtering, sortable metrics and a separate physician reference.
 - Downloadable manuscript and aggregate results.
 - Responsive navigation, keyboard-accessible tabs and dialogs, local fonts, and reduced-motion support.
 
-Task examples and the full result board are expandable so the main page stays focused on the workflow, construction and diagnostic findings.
+Task examples are expandable. The main board shows all tasks and models immediately, ordered by overall performance: readout ranks are averaged within each task and equally across six tasks, using the 17 deterministic columns and average ranks for ties. The two descriptive judge readouts are displayed but excluded from this viewing order. Individual metric sorting can be reset with **Overall performance**.
 
 ## Content and publication metadata
 
@@ -64,4 +64,4 @@ With the local server running and Playwright installed in `medai`:
 conda run -n medai python scripts/browser-check.py
 ```
 
-`PLAYWRIGHT_CHROMIUM_EXECUTABLE` may point to an existing Chromium executable. Checks cover tasks/references, both axes, table sorting/filtering, dialogs, mobile navigation, five viewport sizes, downloads and browser errors. Screenshots and the report are written to ignored `qa/`.
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE` may point to an existing Chromium executable. Checks cover tasks/references, both axes, all table values, overall ordering, metric sorting/filtering, the frozen model column, dialogs, mobile navigation, six viewport sizes, downloads and browser errors. Screenshots and the report are written to ignored `qa/`.
