@@ -123,6 +123,8 @@ def main() -> None:
     axis2_board = json.loads(axis2_board_path.read_text())["per_lane"]
     with axis2_metadata_path.open() as f:
         metadata = {row["model_id"]: row for row in csv.DictReader(f)}
+    for model in axis1_export["models"]:
+        model["name"] = metadata[model["id"]]["display_name"]
     # Read the frozen paper order as data, without executing the research script.
     label_tree = ast.parse(axis2_labels_path.read_text())
     groups = next(ast.literal_eval(node.value) for node in label_tree.body

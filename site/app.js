@@ -1,5 +1,6 @@
 import { publication } from './config.js';
 import { mountAxis2Radar, stateColors } from './axis2-radar.js';
+import { mountAxis1Evidence, evidenceCondition } from './axis1-evidence.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -99,6 +100,7 @@ async function initialize() {
   let sortMetric = null;
   let sortDescending = true;
   let radar = null;
+  let evidenceChart = null;
   let playbackTimer = null;
   let playing = false;
 
@@ -190,7 +192,7 @@ async function initialize() {
   tabKeyboard($('.axis-switch'));
   function updatePlaybackButton() {
     $('#axis-play').setAttribute('aria-pressed', String(playing));
-    $('#axis-play').innerHTML = playing ? '<span aria-hidden="true">Ⅱ</span> Pause' : `<span aria-hidden="true">▷</span> ${axisState === 4 ? 'Replay' : 'Play'} cascade`;
+    $('#axis-play').innerHTML = playing ? '<span aria-hidden="true">Ⅱ</span> Pause' : `<span aria-hidden="true">▷</span> ${axisState === 4 ? 'Replay' : 'Play'} ${selectedAxis === 2 ? 'cascade' : 'conditions'}`;
   }
   function stopPlayback() {
     clearTimeout(playbackTimer);
@@ -220,6 +222,8 @@ async function initialize() {
   function renderAxis() {
     radar?.destroy();
     radar = null;
+    evidenceChart?.destroy();
+    evidenceChart = null;
     const info = axes[selectedAxis];
     for (const button of $$('.axis-switch button')) {
       const active = Number(button.dataset.axis) === selectedAxis;
@@ -228,18 +232,20 @@ async function initialize() {
     }
     $('#axis-panel').setAttribute('aria-labelledby', `axis-tab-${selectedAxis}`);
     $('#axis-panel').classList.toggle('cascade', selectedAxis === 2);
+    $('#axis-panel').classList.toggle('presentation', selectedAxis === 1);
     for (const key of ['kicker', 'question', 'description', 'fixed']) $(`#axis-${key}`).textContent = info[key];
     $('#axis-chart-title').textContent = info.chartTitle;
     $('#axis-chart-population').textContent = info.population;
     $('#axis-takeaway').innerHTML = info.takeaway;
-    $('#axis-states').innerHTML = info.labels.map((label, i) => `<button type="button" data-state="${i}" aria-pressed="${i === axisState}">${selectedAxis === 2 ? `<i class="state-swatch" style="--state-color:${stateColors[i]}" aria-hidden="true"></i>` : ''}${escapeHTML(label)}</button>`).join('');
+    $('#axis-states').innerHTML = info.labels.map((label, i) => `<button type="button" data-state="${i}" aria-pressed="${i === axisState}" aria-label="${escapeHTML(label)}">${selectedAxis === 2 ? `<i class="state-swatch" style="--state-color:${stateColors[i]}" aria-hidden="true"></i>${escapeHTML(label)}` : evidenceCondition(i)}</button>`).join('');
     for (const button of $$('#axis-states button')) button.addEventListener('click', () => {
       stopPlayback();
       axisState = Number(button.dataset.state);
       updateAxisState();
     });
-    $('#axis-playback').hidden = selectedAxis !== 2;
+    $('#axis-playback').hidden = false;
     $('#cascade-mean').hidden = selectedAxis !== 2;
+    $('#presentation-mean').hidden = selectedAxis !== 1;
     $('#axis-chart-key').innerHTML = selectedAxis === 1 ? '<span><i class="key-line"></i>Mean across nine models</span><span><i class="key-line grey"></i>Individual models</span>' : '<span><i class="family-dot general"></i>General · 9</span><span><i class="family-dot video"></i>Video · 2</span><span><i class="family-dot medical"></i>Medical · 8</span>';
     $('#axis-chart-note').textContent = selectedAxis === 1 ? 'Ordinary model means; the equal-count contrast is a separate analysis.' : 'Each spoke is a model; colours follow the five states. Radial range: 30–80% BA. Dashed ring: 50% chance.';
     updateAxisState();
@@ -256,9 +262,13 @@ async function initialize() {
     $('#axis-state-detail').innerHTML = `<b>${escapeHTML(info.labels[axisState])}</b>${escapeHTML(info.descriptions[axisState] + delta)}`;
     if (selectedAxis === 2) {
       $('#axis-state-mean').textContent = percent(data.axis2.states[axisState].mean_balanced_accuracy);
-      $('#axis-step-count').textContent = `${axisState + 1} / 5 states`;
-      updatePlaybackButton();
+    } else {
+      $('#axis1-state-mean').textContent = percent(data.axis1.means[axisState]);
+      const delta = (data.axis1.means[axisState] - data.axis1.means[0]) * 100;
+      $('#axis1-delta').textContent = axisState === 0 ? 'Selected-image baseline' : `${delta < 0 ? '−' : '+'}${Math.abs(delta).toFixed(1)} pp vs selected images`;
     }
+    $('#axis-step-count').textContent = `${axisState + 1} / 5 ${selectedAxis === 2 ? 'states' : 'conditions'}`;
+    updatePlaybackButton();
     drawChart();
   }
   function drawChart() {
@@ -267,24 +277,12 @@ async function initialize() {
       radar.setState(axisState);
       return;
     }
-    const values = data.axis1.means;
-    const min = .2, max = .85;
-    const left = 40, right = 506, top = 30, bottom = 225;
-    const x = i => left + (right - left) * i / 4;
-    const y = value => bottom - (value - min) / (max - min) * (bottom - top);
-    const points = values.map((value, i) => `${x(i)},${y(value)}`).join(' ');
-    const ticks = [.25, .40, .55, .70, .85];
-    const grid = ticks.map(value => `<line class="grid-line" x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}"/><text x="${left - 10}" y="${y(value) + 3}" text-anchor="end">${Math.round(value * 100)}</text>`).join('');
-    const individual = data.axis1.models.map(model => `<polyline class="individual" points="${model.scores.map((value, i) => `${x(i)},${y(value)}`).join(' ')}"/>`).join('');
-    const labels = [['Selected', 'images'], ['Retained', 'images'], ['Video', '128 frames'], ['Video', '256 frames'], ['Video', '512 frames']];
-    $('#axis-chart').innerHTML = `<svg viewBox="0 0 550 280" role="group" aria-labelledby="chart-title-svg"><title id="chart-title-svg">${escapeHTML(axes[selectedAxis].chartTitle)} by information condition. Values are percentages.</title>${grid}${individual}<line class="active-line" x1="${x(axisState)}" x2="${x(axisState)}" y1="${top - 5}" y2="${bottom}"/><polyline class="mean-line" points="${points}"/>${values.map((value, i) => `<circle class="point" cx="${x(i)}" cy="${y(value)}" r="${i === axisState ? 6 : 4}"/><circle cx="${x(i)}" cy="${y(value)}" r="16" fill="transparent" data-chart-state="${i}" role="button" tabindex="0" aria-label="${escapeHTML(axes[selectedAxis].labels[i])}: ${percent(value)}"/>`).join('')}<text class="active-value" x="${x(axisState)}" y="${y(values[axisState]) - 15}" text-anchor="middle">${percent(values[axisState])}</text>${labels.map((lines, i) => `<text class="axis-label" x="${x(i)}" y="245" text-anchor="middle"><tspan x="${x(i)}">${escapeHTML(lines[0])}</tspan><tspan x="${x(i)}" dy="13">${escapeHTML(lines[1])}</tspan></text>`).join('')}</svg>`;
-    for (const node of $$('[data-chart-state]')) {
-      const select = () => { axisState = Number(node.dataset.chartState); updateAxisState(); };
-      node.addEventListener('click', select);
-      node.addEventListener('keydown', event => {
-        if (['Enter', ' '].includes(event.key)) { event.preventDefault(); select(); }
-      });
-    }
+    evidenceChart ??= mountAxis1Evidence($('#axis-chart'), data.axis1, index => {
+      stopPlayback();
+      axisState = index;
+      updateAxisState();
+    });
+    evidenceChart.setState(axisState);
   }
   renderAxis();
 

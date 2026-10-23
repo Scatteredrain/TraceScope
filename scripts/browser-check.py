@@ -98,9 +98,35 @@ def main() -> None:
         page.locator("#close-dialog").click()
         results.append("All six task examples, reference reset/reveal, arrow keys, image dialogs and Escape")
 
+        assert page.locator('.evidence-model-trace').count() == 9
+        assert page.locator('.evidence-chart-condition').count() == 5
+        for state in range(5):
+            page.locator(f'#axis-states button[data-state="{state}"]').click()
+            expected = f'{data["axis1"]["means"][state] * 100:.1f}%'
+            assert page.locator('#axis1-state-mean').inner_text() == expected
+            assert page.locator('.evidence-comparison').get_attribute('data-state') == str(state)
+            assert page.locator('.evidence-comparison').get_attribute('data-animating') == 'false'
+        assert page.locator('#axis1-delta').inner_text() == '−7.6 pp vs selected images'
+        for model in data['axis1']['models']:
+            page.locator('#evidence-model').select_option(model['id'])
+            assert page.locator('.evidence-values b').all_text_contents() == [f'{score * 100:.1f}%' for score in model['scores']]
+            assert [float(value) for value in page.locator('.evidence-selected-points circle').evaluate_all('nodes => nodes.map(node => node.dataset.value)')] == model['scores']
+        page.locator('[data-chart-state="0"]').focus()
+        page.locator('[data-chart-state="0"]').press('ArrowRight')
+        assert page.locator('#axis-states button[data-state="1"]').get_attribute('aria-pressed') == 'true'
         page.locator('#axis-states button[data-state="4"]').click()
-        expected = f'{data["axis1"]["means"][4] * 100:.1f}%'
-        assert page.locator(".active-value").text_content() == expected
+        page.locator('#axis-play').click()
+        expect(page.locator('.evidence-comparison')).to_have_attribute('data-state', '1', timeout=3000)
+        page.locator('#axis-play').click()
+        assert page.locator('#axis-play').get_attribute('aria-pressed') == 'false'
+        page.locator('#axis-states button[data-state="0"]').click()
+        page.locator('#evidence-model').select_option('qwen3vl_8b')
+        page.set_viewport_size({'width': 1440, 'height': 1100})
+        page.locator('#axes').evaluate('element => element.scrollIntoView({block: "start"})')
+        page.mouse.move(15, 30)
+        page.screenshot(path=str(OUTPUT / 'axis1-evidence.png'))
+        page.locator('#evidence-model').select_option('all')
+        results.append('Axis 1: five illustrated conditions, all 45 model values and five means, model highlighting, graph keyboard control, mean difference, playback and reduced-motion support')
         page.locator("#axis-tab-2").click()
         assert page.locator('.radar-profile').count() == 5
         assert page.locator('[data-radar-model]').count() == 19
@@ -199,6 +225,10 @@ def main() -> None:
                 page.locator('#axis-panel').evaluate('element => element.scrollIntoView({block: "start"})')
                 page.screenshot(path=str(OUTPUT / 'axis2-radar-mobile.png'))
                 page.locator('#axis-tab-1').click()
+                page.locator('#evidence-model').select_option('qwen3vl_8b')
+                assert page.locator('.evidence-values b').all_text_contents() == [f'{score * 100:.1f}%' for score in data['axis1']['models'][1]['scores']]
+                page.locator('.axis-chart-wrap').evaluate('element => element.scrollIntoView({block: "start"})')
+                page.screenshot(path=str(OUTPUT / 'axis1-evidence-mobile.png'))
         results.append("Responsive layout at 319, 375, 390, 768, 1024 and 1440px; frozen model column under horizontal scrolling, mobile menu and task interaction")
 
         page.set_viewport_size({"width": 1440, "height": 1000})
@@ -216,6 +246,12 @@ def main() -> None:
         motion_page.on('pageerror', lambda error: errors.append(str(error)))
         motion_page.emulate_media(reduced_motion='no-preference')
         motion_page.goto(BASE + '#axes', wait_until='networkidle')
+        initial_focus = motion_page.locator('.evidence-focus').get_attribute('transform')
+        motion_page.locator('#axis-states button[data-state="4"]').click()
+        motion_page.wait_for_function('(initial) => document.querySelector(".evidence-comparison").dataset.animating === "true" && document.querySelector(".evidence-focus").getAttribute("transform") !== initial', arg=initial_focus)
+        motion_page.emulate_media(reduced_motion='reduce')
+        expect(motion_page.locator('.evidence-comparison')).to_have_attribute('data-animating', 'false')
+        motion_page.emulate_media(reduced_motion='no-preference')
         motion_page.locator('#axis-tab-2').click()
         expect(motion_page.locator('.radar')).to_have_attribute('data-animating', 'true')
         expect(motion_page.locator('.radar')).to_have_attribute('data-animating', 'false', timeout=2000)
@@ -229,7 +265,7 @@ def main() -> None:
         assert motion_page.locator('.radar').count() == 0
         assert motion_page.locator('#axis-play').get_attribute('aria-pressed') == 'false'
         motion_page.close()
-        results.append('Real polygon interpolation verified; changing motion preference finishes the transition, and switching axes cancels playback')
+        results.append('Real Axis 1 focus movement and Axis 2 polygon interpolation verified; changing motion preference finishes transitions, and switching axes cancels playback')
         assert not errors, errors
         results.append("PDF/results downloads, Git metadata isolation, zero third-party requests and zero browser errors")
         browser.close()

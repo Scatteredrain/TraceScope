@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 export async function check() {
-  for (const file of ['site/app.js', 'site/axis2-radar.js', 'site/config.js', 'scripts/serve.mjs']) {
+  for (const file of ['site/app.js', 'site/axis1-evidence.js', 'site/axis2-radar.js', 'site/config.js', 'scripts/serve.mjs']) {
     const result = spawnSync(process.execPath, ['--check', join(root, file)], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
   }
@@ -21,6 +21,13 @@ export async function check() {
   }
   assert.equal(data.axis1.models.length, 9);
   assert.equal(data.axis1.presentations.length, 5);
+  for (const model of data.axis1.models) {
+    assert.equal(model.scores.length, 5);
+    assert(model.name && model.scores.every(value => Number.isFinite(value) && value >= .2 && value <= .8), 'Axis 1 chart must name every model and retain all values');
+  }
+  for (let state = 0; state < 5; state++) {
+    assert(Math.abs(data.axis1.models.reduce((sum, model) => sum + model.scores[state], 0) / 9 - data.axis1.means[state]) < 1e-12);
+  }
   assert.equal(data.axis2.states.length, 5);
   assert.equal(data.axis2.roster.length, 19);
   assert.equal(new Set(data.axis2.roster.map(model => model.id)).size, 19);
