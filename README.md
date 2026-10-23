@@ -27,7 +27,7 @@ npm run preview
 - Three-part research narrative with paper Figures 1, 2 and 3 visible by default and a zoomable figure viewer.
 - A generated brand illustration styled to accompany the paper figures; its prompt and role are documented in `docs/brand-illustration.md`.
 - Six task examples with original paper evidence, reference reveal and full model-response figures.
-- Two interactive diagnostic-axis views built from frozen aggregate results.
+- Two interactive diagnostic-axis views after the main board. Axis 2 recreates the paper's 19-model radar from all 95 frozen balanced-accuracy values, with smooth state transitions, play/pause, model readouts and reduced-motion support.
 - A main board open by default, showing all 22 models and 19 Table 2 readouts in six task groups, with a frozen model column, search, family filtering, sortable metrics and a separate physician reference.
 - Downloadable manuscript and aggregate results.
 - Responsive navigation, keyboard-accessible tabs and dialogs, local fonts, and reduced-motion support.
@@ -64,4 +64,4 @@ With the local server running and Playwright installed in `medai`:
 conda run -n medai python scripts/browser-check.py
 ```
 
-`PLAYWRIGHT_CHROMIUM_EXECUTABLE` may point to an existing Chromium executable. Checks cover tasks/references, both axes, all table values, overall ordering, metric sorting/filtering, the frozen model column, dialogs, mobile navigation, six viewport sizes, downloads and browser errors. Screenshots and the report are written to ignored `qa/`.
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE` may point to an existing Chromium executable. Checks cover tasks/references, both axes, all table values, overall ordering, metric sorting/filtering, the frozen model column, radar values/geometry, playback, real polygon interpolation, reduced-motion support, dialogs, mobile navigation, six viewport sizes, downloads and browser errors. Screenshots and the report are written to ignored `qa/`.

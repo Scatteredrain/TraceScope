@@ -11,7 +11,7 @@ from itertools import groupby
 from pathlib import Path
 from statistics import mean
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "qa"
@@ -56,6 +56,7 @@ def main() -> None:
 
         assert not page.locator('#explore').evaluate('element => element.open')
         assert page.locator('#results').evaluate('element => element.open')
+        assert page.locator('#results').evaluate('element => Boolean(element.compareDocumentPosition(document.querySelector("#axes")) & Node.DOCUMENT_POSITION_FOLLOWING)')
         assert page.locator('#results-tabs').count() == 0
         assert page.locator('#results-head .task-group').count() == 6
         assert page.locator('#results-head .metric-headings th').count() == 19
@@ -101,14 +102,45 @@ def main() -> None:
         expected = f'{data["axis1"]["means"][4] * 100:.1f}%'
         assert page.locator(".active-value").text_content() == expected
         page.locator("#axis-tab-2").click()
+        assert page.locator('.radar-profile').count() == 5
+        assert page.locator('[data-radar-model]').count() == 19
+        assert page.locator('.radar-active-point').count() == 19
+        assert abs(float(page.locator('.radar-chance').get_attribute('r')) - 85.2) < 1e-8
+        for state in range(5):
+            page.locator(f'#axis-states button[data-state="{state}"]').click()
+            assert page.locator('#axis-state-mean').inner_text() == f'{data["axis2"]["states"][state]["mean_balanced_accuracy"] * 100:.1f}%'
+            assert page.locator('.radar').get_attribute('data-animating') == 'false'
+            for index, model in enumerate(data['axis2']['roster']):
+                point = page.locator('.radar-active-point').nth(index)
+                assert float(point.get_attribute('data-value')) == model['scores'][state]
+            profile = page.locator(f'.radar-profile[data-profile="{state}"] circle')
+            assert [float(value) for value in profile.evaluate_all('nodes => nodes.map(node => node.dataset.value)')] == [model['scores'][state] for model in data['axis2']['roster']]
+        for index, model in enumerate(data['axis2']['roster']):
+            page.locator('#radar-model').select_option(str(index))
+            assert page.locator('.radar-values b').all_text_contents() == [f'{score * 100:.1f}%' for score in model['scores']]
+        page.locator('[data-radar-model="0"]').focus()
+        page.locator('[data-radar-model="0"]').press('ArrowRight')
+        assert page.locator('#radar-model').input_value() == '1'
         page.locator('#axis-states button[data-state="4"]').click()
-        assert page.locator(".active-value").text_content() == "61.9%"
+        assert page.locator("#axis-state-mean").text_content() == "61.9%"
         assert "+0.042" in page.locator("#axis-state-detail").inner_text()
+        page.locator('#axis-play').click()
+        expect(page.locator('.radar')).to_have_attribute('data-state', '1', timeout=3000)
+        page.locator('#axis-play').click()
+        assert page.locator('#axis-play').get_attribute('aria-pressed') == 'false'
+        page.locator('#axis-states button[data-state="4"]').click()
+        page.locator('#axis-play').click()
+        expect(page.locator('.radar')).to_have_attribute('data-state', '4', timeout=9000)
+        expect(page.locator('#axis-play')).to_have_attribute('aria-pressed', 'false')
         page.locator('#axis-states button[data-state="3"]').click()
         assert "+0.076" in page.locator("#axis-state-detail").inner_text()
-        page.locator("#axes").scroll_into_view_if_needed()
-        page.screenshot(path=str(OUTPUT / "diagnostic-axes.png"))
-        results.append("Both diagnostic axes and all state values agree with frozen aggregates")
+        page.locator('#axis-states button[data-state="4"]').click()
+        page.locator('#radar-model').select_option('3')
+        page.set_viewport_size({'width': 1440, 'height': 1180})
+        page.locator('#axes').evaluate('element => element.scrollIntoView({block: "start"})')
+        page.mouse.move(15, 30)
+        page.screenshot(path=str(OUTPUT / "axis2-radar.png"))
+        results.append("Axis 2: all 95 source values, 19 model spokes, five profiles, chance ring, model selection, keyboard interaction, playback/pause/completion and reduced-motion behaviour")
 
         page.locator('[data-sort="16"]').click()
         assert "Qwen3.5-27B" in page.locator("#results-body tr").first.inner_text()
@@ -159,6 +191,14 @@ def main() -> None:
                 assert page.locator("#example-title").inner_text() == data["tasks"][5]["title"]
                 page.locator("#reveal-answer").click()
                 assert page.locator("#reference-answer").is_visible()
+                page.locator('#axis-tab-2').click()
+                assert page.locator('.radar svg').get_attribute('viewBox') == '100 34 560 560'
+                assert page.locator('.radar-spoke-number').first.is_visible()
+                assert page.locator('.radar-model-label').first.is_hidden()
+                page.locator('#radar-model').select_option('3')
+                page.locator('#axis-panel').evaluate('element => element.scrollIntoView({block: "start"})')
+                page.screenshot(path=str(OUTPUT / 'axis2-radar-mobile.png'))
+                page.locator('#axis-tab-1').click()
         results.append("Responsive layout at 319, 375, 390, 768, 1024 and 1440px; frozen model column under horizontal scrolling, mobile menu and task interaction")
 
         page.set_viewport_size({"width": 1440, "height": 1000})
@@ -172,6 +212,24 @@ def main() -> None:
         assert page.request.get(BASE + "data/benchmark.json").status == 200
         assert page.request.get(BASE + ".git/config").status == 404
         assert not [url for url in requests if not url.startswith(BASE)]
+        motion_page = context.new_page()
+        motion_page.on('pageerror', lambda error: errors.append(str(error)))
+        motion_page.emulate_media(reduced_motion='no-preference')
+        motion_page.goto(BASE + '#axes', wait_until='networkidle')
+        motion_page.locator('#axis-tab-2').click()
+        expect(motion_page.locator('.radar')).to_have_attribute('data-animating', 'true')
+        expect(motion_page.locator('.radar')).to_have_attribute('data-animating', 'false', timeout=2000)
+        initial = motion_page.locator('.radar-active').get_attribute('points')
+        motion_page.locator('#axis-states button[data-state="0"]').click()
+        motion_page.wait_for_function('(initial) => document.querySelector(".radar").dataset.animating === "true" && document.querySelector(".radar-active").getAttribute("points") !== initial', arg=initial)
+        motion_page.emulate_media(reduced_motion='reduce')
+        expect(motion_page.locator('.radar')).to_have_attribute('data-animating', 'false')
+        motion_page.locator('#axis-play').click()
+        motion_page.locator('#axis-tab-1').click()
+        assert motion_page.locator('.radar').count() == 0
+        assert motion_page.locator('#axis-play').get_attribute('aria-pressed') == 'false'
+        motion_page.close()
+        results.append('Real polygon interpolation verified; changing motion preference finishes the transition, and switching axes cancels playback')
         assert not errors, errors
         results.append("PDF/results downloads, Git metadata isolation, zero third-party requests and zero browser errors")
         browser.close()

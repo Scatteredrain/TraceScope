@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 export async function check() {
-  for (const file of ['site/app.js', 'site/config.js', 'scripts/serve.mjs']) {
+  for (const file of ['site/app.js', 'site/axis2-radar.js', 'site/config.js', 'scripts/serve.mjs']) {
     const result = spawnSync(process.execPath, ['--check', join(root, file)], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
   }
@@ -22,6 +22,17 @@ export async function check() {
   assert.equal(data.axis1.models.length, 9);
   assert.equal(data.axis1.presentations.length, 5);
   assert.equal(data.axis2.states.length, 5);
+  assert.equal(data.axis2.roster.length, 19);
+  assert.equal(new Set(data.axis2.roster.map(model => model.id)).size, 19);
+  assert.deepEqual(data.axis2.radial_scale, { min: .3, max: .8, chance: .5 });
+  for (const model of data.axis2.roster) {
+    assert.equal(model.scores.length, 5);
+    assert(model.scores.every(score => Number.isFinite(score) && score >= data.axis2.radial_scale.min && score <= data.axis2.radial_scale.max), 'Radar must not clip a model');
+  }
+  for (let state = 0; state < 5; state++) {
+    const mean = data.axis2.roster.reduce((sum, model) => sum + model.scores[state], 0) / 19;
+    assert(Math.abs(mean - data.axis2.states[state].mean_balanced_accuracy) < 1e-10, 'Radar and fleet mean must agree');
+  }
   for (const task of data.tasks) {
     await access(join(root, 'public', task.image));
     await access(join(root, 'public', task.example));
@@ -33,6 +44,7 @@ export async function check() {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length, 'Duplicate HTML IDs');
   assert.equal([...html.matchAll(/data-figure="/g)].length, 3, 'Expected the three primary paper figures');
+  assert(html.indexOf('id="results"') < html.indexOf('id="axes"'), 'Main board must precede the diagnostic axes');
   for (const match of html.matchAll(/href="#([^"\s]+)"/g)) {
     assert(ids.includes(match[1]), `Missing anchor #${match[1]}`);
   }

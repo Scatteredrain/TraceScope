@@ -6,9 +6,11 @@ The export intentionally contains no examination IDs, raw reports or predictions
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 
@@ -22,6 +24,10 @@ def main() -> None:
     table = workspace / "overleaf/tables/tab_main_overview_v6_3_compact.tex"
     axis1_path = workspace / "Report-Grounded-VQA-Synthesis/data/axis1/canonical/axis1_t5_primary_analysis.json"
     axis2_path = workspace / "Report-Grounded-VQA-Synthesis/data/axis2/tables/classwise_summary.csv"
+    axis2_root = axis2_path.parents[1]
+    axis2_board_path = axis2_root / "canonical/axis2_hp_full_v2_chance_corrected.json"
+    axis2_labels_path = axis2_root / "scripts/axis2_model_labels.py"
+    axis2_metadata_path = axis2_root / "tables/model_metadata.csv"
     models, references = [], {}
     family = ""
     for line in table.read_text().splitlines():
@@ -114,9 +120,28 @@ def main() -> None:
     axis1_export["means"] = [sum(model["scores"][i] for model in axis1_export["models"]) / len(order) for i in range(5)]
     with axis2_path.open() as f:
         states = [{key: (value if key == "state" else float(value)) for key, value in row.items()} for row in csv.DictReader(f)]
+    axis2_board = json.loads(axis2_board_path.read_text())["per_lane"]
+    with axis2_metadata_path.open() as f:
+        metadata = {row["model_id"]: row for row in csv.DictReader(f)}
+    # Read the frozen paper order as data, without executing the research script.
+    label_tree = ast.parse(axis2_labels_path.read_text())
+    groups = next(ast.literal_eval(node.value) for node in label_tree.body
+                  if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "GROUPS" for target in node.targets))
+    radar_order = [model_id for _, members in groups for model_id in members if model_id in axis2_board and model_id != "ce_r1_deep_image"]
+    assert len(radar_order) == 19 and set(radar_order) == set(metadata) == set(axis2_board)
+    roster = [dict(id=model_id, name=metadata[model_id]["display_name"], family=metadata[model_id]["family"],
+                   scores=[axis2_board[model_id]["states"][state["state"]]["balanced_accuracy"] for state in states]) for model_id in radar_order]
+    for i, state in enumerate(states):
+        assert abs(sum(model["scores"][i] for model in roster) / 19 - state["mean_balanced_accuracy"]) < 1e-10
+        assert all(axis2_board[model_id]["states"][state["state"]]["n"] == 1220 for model_id in radar_order)
+    scores = [score for model in roster for score in model["scores"]]
+    radial_scale = dict(min=math.floor(min(.4, min(scores) - .02) * 20) / 20,
+                        max=math.ceil(max(.8, max(scores) + .02) * 20) / 20, chance=.5)
     data = {"source": "TraceScope manuscript v4, Table 2; frozen diagnostic-axis packages", "tasks": tasks,
-            "metrics": metrics, "models": models, **references, "axis1": axis1_export, "axis2": {"examinations": 1220, "models": 19, "states": states},
-            "provenance": {str(path.relative_to(workspace)): hashlib.sha256(path.read_bytes()).hexdigest() for path in [table, axis1_path, axis2_path]}}
+            "metrics": metrics, "models": models, **references, "axis1": axis1_export,
+            "axis2": {"examinations": 1220, "models": 19, "states": states, "roster": roster, "radial_scale": radial_scale},
+            "provenance": {str(path.relative_to(workspace)): hashlib.sha256(path.read_bytes()).hexdigest()
+                           for path in [table, axis1_path, axis2_path, axis2_board_path, axis2_labels_path, axis2_metadata_path]}}
     out = repo / "site/data/benchmark.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
