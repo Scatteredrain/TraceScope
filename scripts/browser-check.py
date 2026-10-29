@@ -238,7 +238,7 @@ def main() -> None:
         page.evaluate("window.scrollTo(0, 0)")
         page.screenshot(path=str(OUTPUT / "full-page.png"), full_page=True)
         report_height = page.evaluate('document.documentElement.scrollHeight')
-        assert page.request.get(BASE + "assets/tracescope.pdf").status == 200
+        assert page.request.get(BASE + "assets/tracescope.pdf").status == 404
         assert page.request.get(BASE + "data/benchmark.json").status == 200
         assert page.request.get(BASE + ".git/config").status == 404
         assert not [url for url in requests if not url.startswith(BASE)]

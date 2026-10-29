@@ -4,7 +4,7 @@ export const publication = {
   title: 'TraceScope: Tracing Failures from Evidence to Decision in Upper-GI Endoscopy',
   authors: [],
   venue: null,
-  paper: './assets/tracescope.pdf',
+  paper: null,
   repository: 'https://github.com/Scatteredrain/TraceScope',
   dataset: null,
   citation: null,

@@ -44,7 +44,7 @@ export async function check() {
     await access(join(root, 'public', task.image));
     await access(join(root, 'public', task.example));
   }
-  for (const file of ['overview.webp', 'composition.webp', 'construction.webp', 'brand-illustration.png', 'tracescope.pdf']) {
+  for (const file of ['overview.webp', 'composition.webp', 'construction.webp', 'brand-illustration.png']) {
     await access(join(root, 'public/assets', file));
   }
   const html = await readFile(join(root, 'site/index.html'), 'utf8');

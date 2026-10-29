@@ -1,6 +1,7 @@
 dist/
 node_modules/
 qa/
+public/assets/tracescope.pdf
 .DS_Store
 .env
 .env.*

@@ -8,7 +8,7 @@ const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&
 const number = value => new Intl.NumberFormat('en-US').format(value);
 const percent = value => `${(value * 100).toFixed(1)}%`;
 
-for (const link of $$('[data-paper]')) link.href = publication.paper;
+if (publication.paper) for (const link of $$('[data-paper]')) link.href = publication.paper;
 for (const link of $$('[data-repository]')) link.href = publication.repository;
 if (publication.authors.length || publication.venue) {
   const meta = $('#publication-meta');
